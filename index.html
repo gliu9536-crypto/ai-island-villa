@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>线稿风格海岛别墅</title>
+    <style>
+        :root {
+            --rl-paper: #f7f6f2;
+            --rl-ink: #1c2422;
+            --rl-green: #2aa47c;
+            --rl-green-dark: #1d7a5e;
+            --rl-orange: #e8940c;
+            --rl-line: rgba(28, 36, 34, .28);
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #fdfbf6
+        }
+
+        canvas {
+            display: block;
+            touch-action: none
+        }
+
+        /* ===== 莱茵生命 · 实验报告风 UI ===== */
+        #menuDot {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            width: 34px;
+            height: 34px;
+            border-radius: 0;
+            border: 1.5px solid var(--rl-ink);
+            background: var(--rl-paper);
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 32px;
+            color: var(--rl-ink);
+            text-align: center;
+            box-shadow: 2px 2px 0 rgba(28, 36, 34, .25);
+            z-index: 10;
+            user-select: none;
+            transition: background .2s, color .2s, box-shadow .2s, transform .15s
+        }
+
+        #menuDot:hover {
+            background: var(--rl-green);
+            color: #fff;
+            box-shadow: 2px 2px 0 rgba(42, 164, 124, .4)
+        }
+
+        #menuDot:active {
+            transform: translate(2px, 2px);
+            box-shadow: none
+        }
+
+        #menuPanel {
+            position: fixed;
+            top: 58px;
+            right: 14px;
+            background: var(--rl-paper);
+            border: 1.5px solid var(--rl-ink);
+            clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+            padding: 0 14px 14px;
+            font: 12px/1.6 monospace;
+            color: var(--rl-ink);
+            z-index: 10;
+            width: 244px;
+            box-sizing: border-box;
+            max-height: calc(100vh - 76px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            box-shadow: 3px 3px 0 rgba(28, 36, 34, .22);
+            user-select: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity .22s ease, transform .22s ease, visibility .22s
+        }
+
+        #menuPanel.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0)
+        }
+
+        #menuPanel::-webkit-scrollbar {
+            width: 4px
+        }
+
+        #menuPanel::-webkit-scrollbar-thumb {
+            background: var(--rl-line)
+        }
+
+        #menuPanel .rl-head {
+            margin: 0 -14px 4px;
+            padding: 8px 14px;
+            background: var(--rl-ink);
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px
+        }
+
+        #menuPanel .rl-head b {
+            color: #7fe0c0
+        }
+
+        #menuPanel .rl-head span {
+            font-weight: normal;
+            font-size: 10px;
+            color: rgba(255, 255, 255, .75)
+        }
+
+        #menuPanel .rl-read {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 7px 0 8px;
+            border-bottom: 1px solid var(--rl-ink);
+            font-size: 11px;
+            color: #57645f
+        }
+
+        #menuPanel .rl-read b {
+            font-size: 16px;
+            color: var(--rl-ink);
+            letter-spacing: 1px
+        }
+
+        #menuPanel .rl-read em {
+            margin-left: auto;
+            font-style: normal;
+            font-size: 9px;
+            color: var(--rl-orange);
+            letter-spacing: 1px
+        }
+
+        #menuPanel .title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            letter-spacing: 1px
+        }
+
+        #menuPanel .sub {
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            font-weight: bold;
+            font-size: 11px;
+            color: var(--rl-ink);
+            letter-spacing: 2px;
+            margin: 12px 0 6px;
+            border-bottom: 1px dashed var(--rl-line);
+            padding-bottom: 3px
+        }
+
+        #menuPanel .sub i {
+            font-style: normal;
+            font-size: 10px;
+            color: var(--rl-green);
+            letter-spacing: 0
+        }
+
+        #menuPanel .sub::after {
+            content: '';
+            flex: 1
+        }
+
+        #menuPanel .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            cursor: pointer;
+            color: #33403c
+        }
+
+        #menuPanel .sep {
+            height: 1px;
+            background: transparent;
+            margin: 6px 0
+        }
+
+        .toggle {
+            width: 44px;
+            height: 20px;
+            border: 1.5px solid var(--rl-ink);
+            background: var(--rl-paper);
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .2s, border-color .2s
+        }
+
+        .toggle:hover {
+            border-color: var(--rl-green-dark)
+        }
+
+        .toggle .knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 13px;
+            background: var(--rl-ink);
+            transition: left .2s ease, background .2s
+        }
+
+        .toggle.on {
+            background: var(--rl-green)
+        }
+
+        .toggle.on {
+            border-color: var(--rl-green-dark)
+        }
+
+        .toggle.on .knob {
+            left: 25px;
+            background: #fff
+        }
+
+        .toggle:active .knob {
+            transform: scaleX(1.15)
+        }
+
+        #wxChips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 4px
+        }
+
+        .wxChip {
+            padding: 4px 9px;
+            border: 1px solid var(--rl-ink);
+            background: transparent;
+            color: var(--rl-ink);
+            font: 11px monospace;
+            cursor: pointer;
+            clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+            transition: background .15s, color .15s, border-color .15s
+        }
+
+        .wxChip:hover {
+            background: rgba(42, 164, 124, .14)
+        }
+
+        .wxChip.on {
+            background: var(--rl-green);
+            border-color: var(--rl-green-dark);
+            color: #fff;
+            font-weight: bold
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 3px;
+            background: var(--rl-line);
+            outline: none;
+            margin: 0;
+            cursor: pointer
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 0;
+            background: var(--rl-green);
+            border: 1.5px solid var(--rl-ink);
+            cursor: pointer
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 11px;
+            height: 11px;
+            border-radius: 0;
+            background: var(--rl-green);
+            border: 1.5px solid var(--rl-ink);
+            cursor: pointer
+        }
+
+        .viewBtn {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+            padding: 6px 10px;
+            margin: 5px 0;
+            border: 1px solid var(--rl-ink);
+            border-left: 4px solid var(--rl-line);
+            background: transparent;
+            color: var(--rl-ink);
+            cursor: pointer;
+            font: 12px monospace;
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+            transition: border-color .15s, background .15s, color .15s
+        }
+
+        .viewBtn:hover {
+            background: rgba(42, 164, 124, .12)
+        }
+
+        .viewBtn.on {
+            background: var(--rl-green);
+            border-color: var(--rl-green-dark);
+            border-left: 4px solid var(--rl-ink);
+            color: #fff;
+            font-weight: bold
+        }
+
+        #resetBtn {
+            margin-top: 2px;
+            border-color: var(--rl-orange);
+            border-left: 4px solid var(--rl-orange);
+            color: #b06e00;
+            background: rgba(232, 148, 12, .08)
+        }
+
+        #resetBtn:hover {
+            background: rgba(232, 148, 12, .18)
+        }
+
+        #resetBtn:active {
+            transform: translate(1px, 1px)
+        }
+
+        .helpBox {
+            font-size: 11px;
+            color: #4c5a55;
+            line-height: 1.95
+        }
+
+        .helpBox b {
+            color: var(--rl-green-dark);
+            font-weight: bold
+        }
+
+        .aboutBox {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 2px
+        }
+
+        .authorName {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: var(--rl-ink);
+            letter-spacing: 1px
+        }
+
+        .aboutLink {
+            display: block;
+            text-align: center;
+            padding: 6px 10px;
+            border: 1px solid var(--rl-ink);
+            background: transparent;
+            color: var(--rl-ink);
+            text-decoration: none;
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+            transition: background .15s, color .15s
+        }
+
+        .aboutLink:hover {
+            background: var(--rl-green);
+            color: #fff
+        }
+
+        .aboutLink:active {
+            transform: translate(1px, 1px)
+        }
+
+        /* ===== 左下角按键提示卡 · 实验记录样式 ===== */
+        #keyHints {
+            position: fixed;
+            left: 14px;
+            bottom: 14px;
+            background: var(--rl-paper);
+            border: 1.5px solid var(--rl-ink);
+            border-left: 4px solid var(--rl-green);
+            padding: 6px 12px;
+            font: 11px/1.85 monospace;
+            color: #4c5a55;
+            z-index: 5;
+            user-select: none;
+            pointer-events: none;
+            box-shadow: 2px 2px 0 rgba(28, 36, 34, .2)
+        }
+
+        #keyHints::before {
+            content: 'HELP // KEYS';
+            display: block;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--rl-green-dark)
+        }
+
+        #keyHints b {
+            color: var(--rl-ink);
+            font-weight: bold
+        }
+
+        body.touch #keyHints {
+            display: none
+        }
+
+        #hint {
+            position: fixed;
+            left: 50%;
+            bottom: 72px;
+            transform: translateX(-50%);
+            background: var(--rl-ink);
+            color: #fff;
+            border-radius: 0;
+            border-left: 4px solid var(--rl-green);
+            padding: 7px 18px;
+            font: 13px/1 monospace;
+            z-index: 5;
+            box-shadow: 3px 3px 0 rgba(28, 36, 34, .3);
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+            white-space: nowrap
+        }
+
+        #hint::before {
+            content: '// ';
+            color: #7fe0c0
+        }
+
+        #hint.show {
+            opacity: 1
+        }
+
+        #hint b {
+            color: #7fe0c0;
+            margin: 0 2px
+        }
+
+        #clock {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            background: var(--rl-paper);
+            border: 1.5px solid var(--rl-ink);
+            border-left: 4px solid var(--rl-green);
+            padding: 4px 12px 4px 10px;
+            font: 12px monospace;
+            color: var(--rl-ink);
+            z-index: 5;
+            box-shadow: 2px 2px 0 rgba(28, 36, 34, .2);
+            user-select: none;
+            pointer-events: none;
+            white-space: nowrap;
+            display: flex;
+            align-items: baseline;
+            gap: 8px
+        }
+
+        #clock b {
+            font-size: 16px;
+            letter-spacing: 1px
+        }
+
+        #clock span {
+            font-size: 10px;
+            color: var(--rl-green-dark);
+            letter-spacing: 1px
+        }
+
+        #clock span::before {
+            content: '● ';
+            color: var(--rl-orange);
+            font-size: 8px
+        }
+
+        #crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 16px;
+            height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 1.5px solid var(--rl-green);
+            border-radius: 0;
+            box-shadow: 0 0 5px rgba(42, 164, 124, .7);
+            z-index: 6;
+            pointer-events: none;
+            display: none
+        }
+
+        #crosshair.show {
+            display: block
+        }
+
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 2px;
+            height: 2px;
+            margin: -1px 0 0 -1px;
+            background: var(--rl-green)
+        }
+
+        #lockTip {
+            position: fixed;
+            left: 50%;
+            top: 60%;
+            transform: translateX(-50%);
+            background: var(--rl-ink);
+            color: #fff;
+            border-left: 4px solid var(--rl-green);
+            border-radius: 0;
+            padding: 6px 16px;
+            font: 12px/1 monospace;
+            z-index: 6;
+            box-shadow: 3px 3px 0 rgba(28, 36, 34, .3);
+            opacity: 0;
+            transition: opacity .25s;
+            pointer-events: none;
+            white-space: nowrap
+        }
+
+        #lockTip::before {
+            content: '// ';
+            color: #7fe0c0
+        }
+
+        #lockTip.show {
+            opacity: 1
+        }
+
+        #flashOverlay {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9
+        }
+
+        #joyZone {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 45vw;
+            height: 60vh;
+            z-index: 4;
+            display: none;
+            touch-action: none
+        }
+
+        body.touch #joyZone {
+            display: block
+        }
+
+        #joyBase {
+            position: fixed;
+            width: 116px;
+            height: 116px;
+            border-radius: 0;
+            border: 2px solid rgba(42, 164, 124, .6);
+            background: rgba(247, 246, 242, .25);
+            z-index: 4;
+            display: none;
+            pointer-events: none;
+            transform: translate(-50%, -50%)
+        }
+
+        #joyKnob {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 48px;
+            height: 48px;
+            margin: -24px 0 0 -24px;
+            border-radius: 0;
+            background: rgba(42, 164, 124, .8);
+            border: 2px solid #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .3)
+        }
+
+        .touchBtn {
+            position: fixed;
+            z-index: 4;
+            width: 66px;
+            height: 66px;
+            border-radius: 0;
+            border: 2px solid var(--rl-green);
+            background: rgba(247, 246, 242, .82);
+            color: var(--rl-ink);
+            font: bold 14px monospace;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            box-shadow: 2px 2px 0 rgba(28, 36, 34, .3)
+        }
+
+        body.touch .touchBtn {
+            display: flex
+        }
+
+        .touchBtn.pressed {
+            background: var(--rl-green);
+            color: #fff;
+            transform: scale(.92)
+        }
+
+        #btnJump {
+            right: 20px;
+            bottom: 110px
+        }
+
+        #btnAct {
+            right: 20px;
+            bottom: 38px
+        }
+
+        #btnSprint {
+            right: 104px;
+            bottom: 38px
+        }
+
+        body.touch #hint {
+            bottom: 185px
+        }
+    </style>
+</head>
+
+<body>
+    <button id="menuDot">☰</button>
+    <div id="menuPanel">
+        <div class="rl-head"><b>RHINE LAB</b><span>// ISLAND-VILLA</span></div>
+        <div class="rl-read"><b id="clockBig">17:48</b><span id="clockSub">SUNNY · 晴</span><em>SIM-LOCKED</em></div>
+        <div class="sub"><i>01</i>天 气 WEATHER</div>
+        <div id="wxChips"></div>
+        <div class="row"><span>随机切换天气</span>
+            <div class="toggle" id="wxRandToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sep"></div>
+        <div class="sub"><i>02</i>时 间 TIME</div>
+        <div id="timeChips">
+            <div class="wxChip on" id="timeDusk">黄昏 17:48</div>
+            <div class="wxChip" id="timeMid">午夜 00:30</div>
+        </div>
+        <div class="sep"></div>
+        <div class="sub"><i>03</i>音 效 AUDIO</div>
+        <div class="row"><span>音效</span>
+            <div class="toggle on" id="sfxToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sliderRow" style="display:flex;align-items:center;gap:8px;margin:7px 0"><span class="slbl"
+                style="width:32px;font-size:11px;color:#57645f;flex-shrink:0">音量</span><input type="range"
+                id="sfxSlider" min="0" max="1" step="0.01" value="0.6"></div>
+        <div class="sep"></div>
+        <div class="sub"><i>04</i>视 角 VIEW</div>
+        <div class="viewBtn on" id="viewFixedBtn">▸ 固定视角（全局观赏）</div>
+        <div class="viewBtn" id="viewTpBtn">▸ 第三人称视角</div>
+        <div class="viewBtn" id="viewFpBtn">▸ 第一人称视角</div>
+        <div class="sep"></div>
+        <div class="sub"><i>05</i>帮 助 HELP</div>
+        <div class="helpBox">
+            <b>固定视角</b>：拖拽/方向键旋转<br>
+            　　　　　　滚轮 / +− 缩放<br>
+            <b>行走</b>：WASD 移动 · Space 跳跃<br>
+            　　　Shift 疾跑 · <b>E</b> 互动<br>
+            　　　<b>B</b> 打招呼 · <b>V</b> 切换视角
+        </div>
+        <div class="sep"></div>
+        <div class="viewBtn" id="resetBtn">▲ 重置角色位置</div>
+        <div class="sep"></div>
+        <div class="sub"><i>06</i>关 于 ABOUT</div>
+        <div class="aboutBox">
+            <div class="authorName">作者：开岁十四</div>
+            <a class="aboutLink" href="https://space.bilibili.com/1835997117?spm_id_from=333.1007.0.0"
+                target="_blank" rel="noopener">B站 ↗</a>
+        </div>
+    </div>
+    <div id="clock"><b>17:48</b><span>SUNNY · 晴</span></div>
+    <div id="keyHints">
+        <b>拖拽</b> 旋转 · <b>滚轮</b> 缩放 · <b>E</b> 互动<br>
+        <b>WASD</b> 移动 · <b>Space</b> 跳 · <b>B</b> 挥手 · <b>V</b> 视角
+    </div>
+    <div id="hint"></div>
+    <div id="crosshair"></div>
+    <div id="lockTip">点击画面锁定鼠标 · ESC 退出</div>
+    <div id="flashOverlay"></div>
+    <div id="joyZone"></div>
+    <div id="joyBase">
+        <div id="joyKnob"></div>
+    </div>
+    <div class="touchBtn" id="btnSprint">疾跑</div>
+    <div class="touchBtn" id="btnJump">跳</div>
+    <div class="touchBtn" id="btnAct">交互</div>
+
+    <script>
+        window.addEventListener('error', function (e) {
+            document.title = 'ERR ' + e.message + ' @ ' + (e.filename || '').split('/').pop() + ':' + e.lineno;
+        });
+    </script>
+    <script src="three.min.js"></script>
+    <script src="js/materials.js?v=6"></script>
+    <script src="js/sky.js?v=6"></script>
+    <script src="js/island.js?v=6"></script>
+    <script src="js/villa.js?v=6"></script>
+    <script src="js/weather.js?v=6"></script>
+    <script src="js/GLTFLoader.js?v=6"></script>
+    <script src="js/player.js?v=6"></script>
+    <script src="js/ui.js?v=6"></script>
+    <script src="js/main.js?v=6"></script>
+</body>
+
+</html>
